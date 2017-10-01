@@ -25,6 +25,10 @@
 		<!-- data with position of stops -->
 		<script src="./linesStopsData.js" charset="utf-8"></script>
 		
+		<!-- date TO TEST, REMOVE THEM 
+		<script src="./test.js" charset="utf-8"></script>
+		-->
+		
 
 </head>
 
@@ -131,7 +135,8 @@
 <script type="text/javascript">
 
 	var tick = 5000,
-	    tickAJAX = 5000;
+	    tickAJAX = 5000,
+	    ajaxCallDate;
 	/*
 	--------------------------------------------
 	TITLE PANEL                            start
@@ -798,7 +803,7 @@
 	*/
 	
 	// function to update the whole visualization
-	function updateChart(data){
+	function updateChart(data, ajaxCallDateTime){
 	
 		console.log("Updating data");
 		
@@ -813,7 +818,9 @@
 		updateTable(dataToMap.data);
 		
 		// update title
-		title.text("AKTUALNY RUCH KOMUNIKACJI MIEJSKIEJ WOKÓŁ PW, stan na " + dataToMap.max_data)
+		
+		title.text("AKTUALNY RUCH KOMUNIKACJI MIEJSKIEJ WOKÓŁ PW, stan na " + 
+					ajaxCallDateTime.toLocaleTimeString("pl") + " , " + ajaxCallDateTime.toLocaleDateString("pl"));
 		
 		
 	}			
@@ -830,6 +837,8 @@
  "N25", "514", "118", "138", "107", "503", "180", "116", "166", "E-2", "222", "108" ,"167" ,"RL"  ,"R7" , "R8" , "R9" , "R3" ];
 
 	function ajaxCall() {
+	
+		ajaxCallDate = new Date();
 		  
 	  $.ajax({
 		url: 'https://vavel.mini.pw.edu.pl/api/vehicles/v1/full/?line=14,18,10,35,25,4,15,1,9,7,24,22,17,33,159,517,128,175,158,521,127,522,N43,501,525,519,131,N38,504,N32,N35,N88,N85,507,174,109,N36,700,N34,151,182,187,523,143,188,411,385,502,N37,N81,N31,520,N25,514,118,138,107,503,180,116,166,E-2,222,108,167,RL,R7,R8,R9,R3',
@@ -845,8 +854,8 @@
 
 		  setTimeout(function(){
 				
-					updateChart(data);
-					
+					updateChart(data, ajaxCallDate);
+					window.dane = data;
 				}, 0);
 			  
 		  },
@@ -915,28 +924,24 @@
 		
 		}
 	
-
+		
 			// 1. filtration of data					   
 			data = data.filter( function(d) { 			
 			    return d.timetableStatut != "MISSING" & d.nextStopTimetableVisitTime != null;  
 			});		
-			
-			// getting the latest date from data to set proper title 			   
-			var dates = d3.map(data,function(d){  return d.time;}).keys();
-			var max_data = d3.max(dates, function(d) {return new Date(d);});
-			// create string to return, dealing with GMT translation of hour
-			var max_data_string = max_data.getUTCHours() + ":" + 
-								(max_data.getMinutes()<10?'0':'') + 
-								max_data.getMinutes() + " " + 
-								max_data.toLocaleDateString("pl");
-			
-			//2.filtration of data, taking data from max_data to max_data - 3 hours (removing data with date from past days or hours if they occur in the data)
+						
+			//2.filtration of data
 			data = data.filter( function(d) { 	
 			
-			    var d1 = new Date(d.time)
-				var limit = d3.max(dates, function(d) {return new Date(d);});
-				limit.setHours(limit.getHours() - 3);
-			    return  d1 > limit;
+			    var d1 = new Date(d.time); /* automatically add GMT differences to date so from polish 14:00 it makes 16:00 (cause we have +2GMT)
+											  we have to substract this difference; */
+				d1.setHours(d1.getHours() + ajaxCallDate.getTimezoneOffset()/60 ) /* this difference is stored in getTimezoneOffset() in minutes and proper sign, so +2GMT is -120*/
+				
+				// copying object! not reference to object to 
+				var lowerLimitDate = new Date(ajaxCallDate.getTime());
+				lowerLimitDate.setHours(lowerLimitDate.getHours() - 3);
+				
+			    return  d1 <= ajaxCallDate & d1 >= lowerLimitDate; //date should be earlier that ajaxCallDate and later than ajaxCallDate - 3 hours
 			});		
 			
 			data.map(cleanTramStopName); //map works on data!, cleaning names of stops
@@ -945,7 +950,7 @@
 								   d.position = i+1; // position to create leaders of delays ranking
 								   })
 	
-			return  {"data": data, "max_data": max_data_string};
+			return  {"data": data};
 	
 	};			
 	
