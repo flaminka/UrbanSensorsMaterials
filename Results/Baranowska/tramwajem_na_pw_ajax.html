@@ -927,7 +927,7 @@
 		
 			// 1. filtration of data					   
 			data = data.filter( function(d) { 			
-			    return d.timetableStatut != "MISSING" & d.nextStopTimetableVisitTime != null;  
+			    return d.timetableStatus != "MISSING" & d.nextStopTimetableVisitTime != null;  
 			});		
 						
 			//2.filtration of data
@@ -937,9 +937,9 @@
 											  we have to substract this difference; */
 				d1.setHours(d1.getHours() + ajaxCallDate.getTimezoneOffset()/60 ) /* this difference is stored in getTimezoneOffset() in minutes and proper sign, so +2GMT is -120*/
 				
-				// copying object! not reference to object to 
+				// copying object! not reference to object
 				var lowerLimitDate = new Date(ajaxCallDate.getTime());
-				lowerLimitDate.setHours(lowerLimitDate.getHours() - 3);
+				lowerLimitDate.setHours(lowerLimitDate.getHours() - 1);
 				
 			    return  d1 <= ajaxCallDate & d1 >= lowerLimitDate; //date should be earlier that ajaxCallDate and later than ajaxCallDate - 3 hours
 			});		
@@ -1040,3 +1040,10 @@
 
 
 </html>
+
+
+<!--
+- może fakt nadpisywania zmiennych albo fakt usuwania duplikatów
+-
+
+-->
