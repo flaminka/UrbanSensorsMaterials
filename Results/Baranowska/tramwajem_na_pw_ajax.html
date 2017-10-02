@@ -1,6 +1,14 @@
 ﻿<!DOCTYPE html>
 <html lang="pl">
 
+<!-- IMPORTANT ISSUES 
+
+- lines of trams and buses from PW neighbourhood must be manually corrected in the future
+ (variables trams and buses and ajax url)
+
+
+-->
+
 
 
 <!--  I PART - HEADER - loading data and scripts -->
@@ -9,7 +17,7 @@
 <meta charset="utf-8">
 
 	<title>
-	Tramwajem na PW
+	Komunikacją miejską na PW
 	</title>
 
 		<!-- loading D3 library, internet connection needed -->
@@ -24,11 +32,7 @@
 		
 		<!-- data with position of stops -->
 		<script src="./linesStopsData.js" charset="utf-8"></script>
-		
-		<!-- date TO TEST, REMOVE THEM 
-		<script src="./test.js" charset="utf-8"></script>
-		-->
-		
+				
 
 </head>
 
@@ -136,14 +140,13 @@
 
 	var tick = 5000,
 	    tickAJAX = 5000,
-	    ajaxCallDate;
+	    ajaxCallDate; // global variable for saving time of ajax request call
 	/*
 	--------------------------------------------
 	TITLE PANEL                            start
 	--------------------------------------------
 	*/
 	
-	/* SIMPLE EXAMPLE 1 - SELECTION WITHOUT DATA */
 	
 	// ADDING TITLE
 	var title = d3.select("#titlePanel").append("text")
@@ -153,8 +156,6 @@
 		.style("font-size", "16px")
 		.attr("fill", "white");
 		
-	/* EXAMPLE 1 - END*/
-	
 		
 	// ADDING LEGEND
 	var legend = d3.select("#titlePanel").selectAll("g")
@@ -273,9 +274,11 @@
 	// function to update mapPanel, updating separately, 1. circles, 2.arrows (lines), 3. labels with delay 4. labels with line number
 	function updateMap(data) {
 	
+	//console.log("data inside map before fitler for location", data);
 	// filter data to trams inside the map
 	var data = data.filter(function(d){ return (d.lon <= rangeLon[1] & d.lon >= rangeLon[0])  // proper longitude inside map
 					& (d.lat <= rangeLat[1] & d.lat >= rangeLat[0]);});
+	
 	
 	
 		// 1. ARROWS
@@ -491,8 +494,9 @@
 			.duration(tick)
 			.attr("x", function(d){ return scaleLon(d.lon);})
 			.attr("y", function(d){ return scaleLat(d.lat)+4;})
-			.text(function(d){ return d.line; })
-			.style("pointer-events", "none");
+			.text(function(d){ return d.line; }); 
+			
+		
 			
 		// step: ENTER		
 		tramLineNumber.enter().append("text")
@@ -504,7 +508,8 @@
 			.style("pointer-events", "none")
 		    .attr('fill',"white")
 			.text(function(d){ return d.line; })
-		//.merge(tramLineNumber)
+		.merge(tramLineNumber)
+		.raise() // to move it to front
 		
 		
 		
@@ -580,7 +585,6 @@
 	-------------------------------------------------------------
 	*/
  
-	/* SIMPLE EXAMPLE 2 - SELECTION WITH DATA */
 	
 	// adding images with stop sign
 	var tramStops = d3.select("#mapPanel").selectAll(".tramStop")
@@ -593,8 +597,7 @@
 				.attr("height", 10)
 				.attr("x", function(d){ return scaleLon(d.lon)-4;}) // left upper corner of the image is positioned, so we manually center it, by adding half of width/image
 				.attr("y", function(d){ return scaleLat(d.lat)-5;})
-
-	/* EXAMPLE 2 - end */			
+			
 				
 	// container for tooltip for tram stops
 	var tooltipTramStops = d3.select("div").append("div").attr("id", "tooltipTramStops").attr("class", "tooltip").style("opacity",0);	
@@ -825,12 +828,13 @@
 		
 	}			
 	
-		/*
+	/*
 	--------------------------------------------
-	ŚCIĄGANIE AJAXEM                       start
+	DOWNLOAD DATA WITH AJAX                start
 	--------------------------------------------
 	*/
 
+	// current lines of buses and trams from neighbourhood,  need manual corrections, the same in ajax request url
 	var trams = ["14", "18", "10", "35", "25", "4",  "15", "1",  "9",  "7",  "24", "22", "17", "33"],
 		buses = [ "159", "517", "128", "175", "158", "521", "127", "522", "N43", "501", "525","519", "131", "N38" ,"504", "N32", "N35", "N88","N85",
  "507", "174", "109", "N36", "700", "N34", "151", "182", "187", "523", "143", "188", "411", "385", "502", "N37", "N81", "N31", "520",
@@ -879,7 +883,7 @@
 
 	/*
 	--------------------------------------------
-	ŚCIĄGANIE AJAXEM                         end
+	DOWNLOAD DATA WITH AJAX                  end
 	--------------------------------------------
 	*/
 	
@@ -892,10 +896,10 @@
 	
 		ajaxCall();
 		
-	}, tickAJAX);
+	}, 0);
 
+	/* TODO consider changing setTimeout and related issues to more simple process */
 	
-	/* TODO rozważyć czy najlepszą opcją jest setInterval() czy nie używać innej funkcji w razie zaburzeń*/
 	
 	/*
 	--------------------------------------------
@@ -939,7 +943,7 @@
 				
 				// copying object! not reference to object
 				var lowerLimitDate = new Date(ajaxCallDate.getTime());
-				lowerLimitDate.setHours(lowerLimitDate.getHours() - 1);
+				lowerLimitDate.setHours(lowerLimitDate.getHours() - 1); 
 				
 			    return  d1 <= ajaxCallDate & d1 >= lowerLimitDate; //date should be earlier that ajaxCallDate and later than ajaxCallDate - 3 hours
 			});		
@@ -1041,9 +1045,3 @@
 
 </html>
 
-
-<!--
-- może fakt nadpisywania zmiennych albo fakt usuwania duplikatów
--
-
--->
